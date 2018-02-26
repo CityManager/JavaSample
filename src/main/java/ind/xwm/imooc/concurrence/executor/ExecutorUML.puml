@@ -1,0 +1,11 @@
+@startuml
+[->ThreadPoolExecutor:Executors.\nnewFixedThreadPool(5)
+[<-ThreadPoolExecutor:return
+[->ThreadPoolExecutor:submit(Runnable/Callable)
+ThreadPoolExecutor->AbstractExecutorService:submit(Runnable/Callable)
+AbstractExecutorService->FutureTask:new FutureTask(Runnable/Callable)
+FutureTask->AbstractExecutorService: return FutureTask
+AbstractExecutorService->ThreadPoolExecutor: execute(FutureTask)
+[<-ThreadPoolExecutor:return Future\n 以上是简单流程\n重点在于execute方法
+
+@enduml
