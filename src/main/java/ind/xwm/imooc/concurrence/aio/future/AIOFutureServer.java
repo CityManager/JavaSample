@@ -15,8 +15,8 @@ import java.util.concurrent.Future;
 /**
  * 广播传播器服务端
  */
-public class AIOServerOnFuture {
-    private static Logger logger = LogManager.getLogger(AIOServerOnFuture.class);
+public class AIOFutureServer {
+    private static Logger logger = LogManager.getLogger(AIOFutureServer.class);
     private static int PORT = 7878;
     private static String IP = "127.0.0.1";
     private List<Future<AsynchronousSocketChannel>> acceptFutureList = new ArrayList<>();
@@ -28,27 +28,29 @@ public class AIOServerOnFuture {
             if (serverChannel.isOpen()) {
                 serverChannel.setOption(StandardSocketOptions.SO_REUSEADDR, false);
                 serverChannel.bind(new InetSocketAddress(IP, PORT));
-                logger.info("AIOServerOnFuture: waiting for connections...");
+                logger.info("AIOFutureServer: waiting for connections...");
                 // 先启动 成员信息传播器
                 new Thread(new ChannelHandler(members)).start();
                 // 开始接受请求
-                while (true) {
+                while (true) { // accept 操作 一定要阻塞到结果返回,如果是异步写法,第二次调用,则容易出现null异常
 
-                    Future<AsynchronousSocketChannel> acceptFuture = serverChannel.accept();
-                    acceptFutureList.add(acceptFuture);
-                    for (Future<AsynchronousSocketChannel> f : acceptFutureList) {
-                        if (f.isDone()) {
-                            AsynchronousSocketChannel channel = f.get();
-                            logger.info("AIOServerOnFuture: 接受连接-{}", channel.getRemoteAddress());
-                            members.add(channel);
-                        }
-                    }
+//                    Future<AsynchronousSocketChannel> acceptFuture = serverChannel.accept();
+//                    acceptFutureList.add(acceptFuture);
+//                    for (Future<AsynchronousSocketChannel> f : acceptFutureList) {
+//                        if (f.isDone()) {
+//                            AsynchronousSocketChannel channel = f.get();
+//                            logger.info("AIOFutureServer: 接受连接-{}", channel.getRemoteAddress());
+//                            members.add(channel);
+//                        }
+//                    }
+                    AsynchronousSocketChannel channel = serverChannel.accept().get();
+                    members.add(channel);
                 }
             } else {
-                logger.info("AIOServerOnFuture:ServerSocketChannel open failed.");
+                logger.info("AIOFutureServer:ServerSocketChannel open failed.");
             }
         } catch (Exception e) {
-            logger.info("AIOServerOnFuture:异常{}-", e.getMessage(), e);
+            logger.info("AIOFutureServer:异常{}-", e.getMessage(), e);
         }
     }
 }

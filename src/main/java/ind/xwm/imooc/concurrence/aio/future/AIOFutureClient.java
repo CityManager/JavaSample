@@ -11,8 +11,8 @@ import java.nio.channels.AsynchronousSocketChannel;
 import java.nio.charset.Charset;
 import java.nio.charset.CharsetDecoder;
 
-public class AIOClientOnFuture implements Runnable {
-    private static Logger logger = LogManager.getLogger(AIOClientOnFuture.class);
+public class AIOFutureClient implements Runnable {
+    private static Logger logger = LogManager.getLogger(AIOFutureClient.class);
 
     private static int PORT = 7878;
     private static String IP = "127.0.0.1";
@@ -31,6 +31,7 @@ public class AIOClientOnFuture implements Runnable {
                 channel.setOption(StandardSocketOptions.SO_SNDBUF, 128 * 1024);
                 channel.setOption(StandardSocketOptions.SO_KEEPALIVE, true);
                 Void aVoid = channel.connect(new InetSocketAddress(IP, PORT)).get();
+                logger.info("成功连接到服务器-{}", aVoid);
                 ByteBuffer byteBuffer = ByteBuffer.allocateDirect(1024);
                 if (aVoid == null) {
                     long id = Thread.currentThread().getId();
@@ -51,10 +52,10 @@ public class AIOClientOnFuture implements Runnable {
                 }
 
             } else {
-                logger.info("AIOClientOnFuture:SocketChannel open failed.");
+                logger.info("AIOFutureClient:SocketChannel open failed.");
             }
         } catch (Exception e) {
-            logger.info("AIOClientOnFuture:异常{}-", e.getMessage(), e);
+            logger.info("AIOFutureClient:异常{}-", e.getMessage(), e);
         }
     }
 }
