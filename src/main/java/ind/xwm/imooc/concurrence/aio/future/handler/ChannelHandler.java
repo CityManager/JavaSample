@@ -5,6 +5,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 
 public class ChannelHandler implements Runnable {
@@ -20,13 +21,12 @@ public class ChannelHandler implements Runnable {
     public void run() {
         while (true) {
             try {
-
-                for (AIOWrapper wrapper : wrappers) { // todo 待调整为 wrapper 的方式
-                    if (wrapper.isReadDone()) {
+                for (AIOWrapper wrapper : wrappers) {  // 没有remove操作,对同一个集合两次for
+                    if (!wrapper.isClosed() && wrapper.isReadDone()) {
                         String msg = wrapper.get();
                         wrapper.read(); // 如果是这样
-                        for (AIOWrapper wrapper4Write : wrappers) {
-                            if (!wrapper4Write.equals(wrapper)) {
+                        for (AIOWrapper wrapperForWrite : wrappers) {
+                            if (!wrapperForWrite.equals(wrapper)) {
                                 // todo 写入内容
                             }
                         }

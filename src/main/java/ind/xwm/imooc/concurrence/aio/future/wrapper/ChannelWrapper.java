@@ -44,7 +44,7 @@ public class ChannelWrapper implements AIOWrapper {
     public void readCall() {  // 被写线程调用
         synchronized (lockRead) {
             try {
-                if (futureRead != null && futureRead.isDone()) {
+                if (channel.isOpen() && futureRead != null && futureRead.isDone()) {
                     if (futureRead.get() != -1) {
                         bufferRead.flip();
                         while (bufferRead.hasRemaining()) {

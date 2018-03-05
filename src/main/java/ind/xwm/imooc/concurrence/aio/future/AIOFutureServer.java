@@ -60,7 +60,7 @@ public class AIOFutureServer {
 //                    }
                     AsynchronousSocketChannel channel = serverChannel.accept().get();
                     wrappers.add(new ChannelWrapper(channel));
-                    // 由 接受 looper 来控制请求的清理,只是移除，其他线程使用iterator?，不知道行不行
+                    // 由 接受 looper 来控制请求的清理,只是移除, 因为确定是close,其他现场已经不会对其进行操作
                     wrappers.removeIf(AIOWrapper::isClosed);
                 }
             } else {
