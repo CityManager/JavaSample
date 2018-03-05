@@ -1,4 +1,4 @@
-package ind.xwm.imooc.learnJavaUtil;
+package ind.xwm.imooc.learnJavaUtil.iterator;
 
 import java.util.ArrayList;
 import java.util.Iterator;
