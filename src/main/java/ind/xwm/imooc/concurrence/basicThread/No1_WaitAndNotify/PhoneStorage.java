@@ -36,7 +36,7 @@ public class PhoneStorage<T> implements Storage<T> {
             storageList.add(t);
             series++;
             index++;
-            LOCK.notifyAll();  // 是否会 自动 notify ？
+            LOCK.notifyAll();  // 一定要 notify
         }
         System.out.println("线程" + threadID + ":成功将产品存放进缓存区");
     }
