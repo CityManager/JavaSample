@@ -1,6 +1,6 @@
 package ind.xwm.imooc.concurrence.aio.future.handler;
 
-import ind.xwm.imooc.concurrence.aio.future.wrapper.Wrapper;
+import ind.xwm.imooc.concurrence.aio.future.wrapper.AIOWrapper;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -10,9 +10,9 @@ import java.util.List;
 public class ChannelHandler implements Runnable {
     private static Logger logger = LogManager.getLogger(ChannelHandler.class);
 
-    private List<Wrapper> wrappers = new ArrayList<>();
+    private List<AIOWrapper> wrappers = new ArrayList<>();
 
-    public void setWrappers(List<Wrapper> wrappers) {
+    public void setWrappers(List<AIOWrapper> wrappers) {
         this.wrappers = wrappers;
     }
 
@@ -21,11 +21,11 @@ public class ChannelHandler implements Runnable {
         while (true) {
             try {
 
-                for (Wrapper wrapper : wrappers) { // todo 待调整为 wrapper 的方式
+                for (AIOWrapper wrapper : wrappers) { // todo 待调整为 wrapper 的方式
                     if (wrapper.isReadDone()) {
                         String msg = wrapper.get();
                         wrapper.read(); // 如果是这样
-                        for (Wrapper wrapper4Write : wrappers) {
+                        for (AIOWrapper wrapper4Write : wrappers) {
                             if (!wrapper4Write.equals(wrapper)) {
                                 // todo 写入内容
                             }

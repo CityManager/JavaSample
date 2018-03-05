@@ -1,10 +1,11 @@
 package ind.xwm.imooc.concurrence.aio.future.wrapper;
 
-public interface Wrapper {
+public interface AIOWrapper {
     boolean isReadDone();
-    void readCall();
-    void writeCall();
-    String get();
     void read();
+    void readCall();
+    String get();
+
+    void writeCall();
     boolean isClosed();
 }

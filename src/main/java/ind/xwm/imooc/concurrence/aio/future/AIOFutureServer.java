@@ -2,8 +2,9 @@ package ind.xwm.imooc.concurrence.aio.future;
 
 import ind.xwm.imooc.concurrence.aio.future.handler.ChannelHandler;
 import ind.xwm.imooc.concurrence.aio.future.worker.ReadWorker;
+import ind.xwm.imooc.concurrence.aio.future.worker.WriteWoker;
 import ind.xwm.imooc.concurrence.aio.future.wrapper.ChannelWrapper;
-import ind.xwm.imooc.concurrence.aio.future.wrapper.Wrapper;
+import ind.xwm.imooc.concurrence.aio.future.wrapper.AIOWrapper;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -24,7 +25,7 @@ public class AIOFutureServer {
     private static int PORT = 7878;
     private static String IP = "127.0.0.1";
     // private List<Future<AsynchronousSocketChannel>> acceptFutureList = new ArrayList<>();
-    private List<Wrapper> wrappers = new ArrayList<>();
+    private List<AIOWrapper> wrappers = new ArrayList<>();
     private Executor executor = Executors.newFixedThreadPool(3);
 
     public void startServer() {
@@ -39,8 +40,11 @@ public class AIOFutureServer {
                 handler.setWrappers(wrappers);
                 ReadWorker readWorker = new ReadWorker();
                 readWorker.setWrappers(wrappers);
+                WriteWoker writeWoker = new WriteWoker();
+                writeWoker.setWrappers(wrappers);
                 executor.execute(handler);
                 executor.execute(readWorker);
+                executor.execute(writeWoker);
                 // todo 增加一个 writeWorker
                 // 开始接受请求
                 while (true) { // accept 操作 一定要阻塞到结果返回,如果是异步写法,第二次调用,则容易出现null异常
@@ -56,6 +60,8 @@ public class AIOFutureServer {
 //                    }
                     AsynchronousSocketChannel channel = serverChannel.accept().get();
                     wrappers.add(new ChannelWrapper(channel));
+                    // 由 接受 looper 来控制请求的清理,只是移除，其他线程使用iterator?，不知道行不行
+                    wrappers.removeIf(AIOWrapper::isClosed);
                 }
             } else {
                 logger.info("AIOFutureServer:ServerSocketChannel open failed.");
