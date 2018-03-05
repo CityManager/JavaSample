@@ -19,15 +19,19 @@ public class ChannelHandler implements Runnable {
 
     @Override
     public void run() {
+        logger.info("handler 线程");
         while (true) {
             try {
                 for (AIOWrapper wrapper : wrappers) {  // 没有remove操作,对同一个集合两次for
+                    logger.info("开始读取数据--{}", wrappers.size());
                     if (!wrapper.isClosed() && wrapper.isReadDone()) {
+
                         String msg = wrapper.get();
                         wrapper.read(); // 如果是这样
                         for (AIOWrapper wrapperForWrite : wrappers) {
                             if (!wrapperForWrite.equals(wrapper)) {
                                 // todo 写入内容
+                                logger.info(msg);
                             }
                         }
                     }

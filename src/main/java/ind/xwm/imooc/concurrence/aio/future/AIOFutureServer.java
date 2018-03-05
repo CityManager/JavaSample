@@ -26,7 +26,7 @@ public class AIOFutureServer {
     private static String IP = "127.0.0.1";
     // private List<Future<AsynchronousSocketChannel>> acceptFutureList = new ArrayList<>();
     private List<AIOWrapper> wrappers = new ArrayList<>();
-    private Executor executor = Executors.newFixedThreadPool(3);
+    private Executor executor = Executors.newCachedThreadPool();
 
     public void startServer() {
         try {
@@ -59,8 +59,10 @@ public class AIOFutureServer {
 //                        }
 //                    }
                     AsynchronousSocketChannel channel = serverChannel.accept().get();
+                    logger.info("获得一个连接");
                     wrappers.add(new ChannelWrapper(channel));
                     // 由 接受 looper 来控制请求的清理,只是移除, 因为确定是close,其他现场已经不会对其进行操作
+                    logger.info("channel: {}", channel.isOpen());
                     wrappers.removeIf(AIOWrapper::isClosed);
                 }
             } else {
