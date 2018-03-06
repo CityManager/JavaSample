@@ -42,12 +42,15 @@ public class AIOFutureClient implements Runnable {
                         channel.write(byteBuffer).get();
                         byteBuffer.clear();
 
-                        if (channel.read(byteBuffer).get() != -1) {
-                            byteBuffer.flip();
-                            CharBuffer charBuffer = decoder.decode(byteBuffer);
-                            logger.info("{}-client-received:{}", id, charBuffer.toString());
-                        }
+//
+//
+//                        if (channel.read(byteBuffer).get() != -1) {
+//                            byteBuffer.flip();
+//                            CharBuffer charBuffer = decoder.decode(byteBuffer);
+//                            logger.info("{}-client-received:{}", id, charBuffer.toString());
+//                        }
                     }
+                    channel.close();
 
                 }
 

@@ -3,20 +3,23 @@ package ind.xwm.imooc.concurrence.aio.future.wrapper;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.nio.CharBuffer;
 import java.nio.channels.AsynchronousSocketChannel;
-import java.util.ArrayList;
-import java.util.List;
+import java.nio.charset.Charset;
+import java.nio.charset.CharsetDecoder;
 import java.util.concurrent.Future;
 
 public class ChannelWrapper implements AIOWrapper {
     private static Logger logger = LogManager.getLogger(ChannelWrapper.class);
+    private static CharsetDecoder decoder = Charset.forName("UTF-8").newDecoder();
 
     private AsynchronousSocketChannel channel;
 
-    private ByteBuffer bufferRead = ByteBuffer.allocateDirect(1024);
+    private ByteBuffer bufferRead = ByteBuffer.allocateDirect(128 * 1024);
     private Future<Integer> futureRead = null;
-    private List<Byte> bytesRead = new ArrayList<>();
+    private String msgRead = null;
     private final Object lockRead = new Object();
 
     public ChannelWrapper(AsynchronousSocketChannel channel) {
@@ -40,28 +43,31 @@ public class ChannelWrapper implements AIOWrapper {
         }
     }
 
+    /**
+     * 前传： 设计： 假设客户端传输的数据大于 Buffer的容量，所以分多次进行异步读取
+     * 问题：  当发起 channel.read(bufferRead) 后，无论本次客户端的数据是否已经发送完数据
+     * 服务端都已经处于异步 等待读 或者 读的过程，根本就没有进行 futureRead = null; 机会
+     * <p>
+     * 现在： 设计： 增加 Buffer 容量(128 * 1024)，每次只读取一次， 客户端限制发送的数据长度
+     */
     @Override
     public void readCall() {  // 被写线程调用
         synchronized (lockRead) {
             try {
-                if (channel.isOpen() && futureRead != null && futureRead.isDone()) {
-                    logger.info("收到数据");
+                if (!this.isClosed() && futureRead != null && futureRead.isDone()) {
                     if (futureRead.get() > 0) {
                         bufferRead.flip();
-                        while (bufferRead.hasRemaining()) {
-                            logger.info("读取一个byte");
-                            bytesRead.add(bufferRead.get());
-                        }
+                        CharBuffer charBuffer = decoder.decode(bufferRead);
+                        charBuffer.flip();
+                        msgRead = charBuffer.toString();
                         bufferRead.compact();
-                        futureRead = channel.read(bufferRead);  // 主要问题在这里。
-                    } else {
-                        logger.info("读取结束");
-                        futureRead = null;
                     }
+                    futureRead = null;
                 }
                 lockRead.notify();
             } catch (Exception e) {
                 logger.info("ChannelWrapper:异常{}-", e.getMessage(), e);
+                close();
             }
         }
     }
@@ -73,17 +79,12 @@ public class ChannelWrapper implements AIOWrapper {
                 if (futureRead != null) {
                     lockRead.wait();
                 }
-                byte[] bytesMsg = new byte[bytesRead.size()];
-                for (int i = 0; i < bytesRead.size(); i++) {
-                    bytesMsg[i] = bytesRead.get(i);
-                }
-                String msg = new String(bytesMsg, "UTF-8");
-                logger.info("接受数据-{}", msg);
-                bytesRead = new ArrayList<>();
-                lockRead.notify();
-                return msg;
+                return msgRead;
             } catch (Exception e) {
                 logger.info("ChannelWrapper:异常{}-", e.getMessage(), e);
+                close();
+            } finally {
+                lockRead.notify();
             }
 
         }
@@ -98,6 +99,20 @@ public class ChannelWrapper implements AIOWrapper {
 
     @Override
     public boolean isClosed() {
-        return !channel.isOpen();
+        return channel == null || !channel.isOpen();
+    }
+
+
+    /**
+     * 关闭channel
+     */
+    private void close() {
+        try {
+            channel.close();
+        } catch (IOException e) {
+            logger.info("ChannelWrapper:异常{}-", e.getMessage(), e);
+        } finally {
+            channel = null;
+        }
     }
 }
