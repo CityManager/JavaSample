@@ -1,18 +1,14 @@
 package ind.xwm.imooc.concurrence.aio.future.worker;
 
-import ind.xwm.imooc.concurrence.aio.future.wrapper.AIOWrapper;
-
-import java.util.ArrayList;
-import java.util.List;
+import ind.xwm.imooc.concurrence.aio.future.container.AIOWrapperContainer;
 
 public class WriteWoker implements Runnable {
 
-    private List<AIOWrapper> wrappers = new ArrayList<>();
+    private AIOWrapperContainer container;
 
-    public void setWrappers(List<AIOWrapper> wrappers) {
-        this.wrappers = wrappers;
+    public WriteWoker(AIOWrapperContainer container) {
+        this.container = container;
     }
-
 
     @Override
     public void run() {

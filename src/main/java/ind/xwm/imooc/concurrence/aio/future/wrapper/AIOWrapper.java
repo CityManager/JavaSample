@@ -6,6 +6,7 @@ public interface AIOWrapper {
     void readCall();
     String get();
 
+    void write(String msg);
     void writeCall();
     boolean isClosed();
 }

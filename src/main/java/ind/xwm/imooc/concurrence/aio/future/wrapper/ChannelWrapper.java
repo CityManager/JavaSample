@@ -11,6 +11,9 @@ import java.nio.charset.Charset;
 import java.nio.charset.CharsetDecoder;
 import java.util.concurrent.Future;
 
+/**
+ * AsynchronousSocketChannel
+ */
 public class ChannelWrapper implements AIOWrapper {
     private static Logger logger = LogManager.getLogger(ChannelWrapper.class);
     private static CharsetDecoder decoder = Charset.forName("UTF-8").newDecoder();
@@ -55,12 +58,18 @@ public class ChannelWrapper implements AIOWrapper {
         synchronized (lockRead) {
             try {
                 if (!this.isClosed() && futureRead != null && futureRead.isDone()) {
-                    if (futureRead.get() > 0) {
+                    int readLen = futureRead.get();
+                    logger.info("readLen-{}", readLen);
+                    if (readLen != -1) {
                         bufferRead.flip();
-                        CharBuffer charBuffer = decoder.decode(bufferRead);
+                        CharBuffer charBuffer = CharBuffer.allocate(128*1024);
+                        decoder.decode(bufferRead, charBuffer, false);
                         charBuffer.flip();
                         msgRead = charBuffer.toString();
+                        logger.info("readCall-" + msgRead);
                         bufferRead.compact();
+                    } else { // 链接已经断开
+                        close();
                     }
                     futureRead = null;
                 }
@@ -79,16 +88,22 @@ public class ChannelWrapper implements AIOWrapper {
                 if (futureRead != null) {
                     lockRead.wait();
                 }
-                return msgRead;
+                String msg = msgRead;
+                msgRead = "";
+                return msg;
             } catch (Exception e) {
                 logger.info("ChannelWrapper:异常{}-", e.getMessage(), e);
                 close();
             } finally {
                 lockRead.notify();
             }
-
         }
         return null;
+    }
+
+    @Override
+    public void write(String msg) {
+        logger.info(msg);
     }
 
     @Override

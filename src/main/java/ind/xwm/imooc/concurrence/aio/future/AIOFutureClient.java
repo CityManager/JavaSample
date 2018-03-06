@@ -6,7 +6,6 @@ import org.apache.logging.log4j.Logger;
 import java.net.InetSocketAddress;
 import java.net.StandardSocketOptions;
 import java.nio.ByteBuffer;
-import java.nio.CharBuffer;
 import java.nio.channels.AsynchronousSocketChannel;
 import java.nio.charset.Charset;
 import java.nio.charset.CharsetDecoder;
@@ -41,7 +40,7 @@ public class AIOFutureClient implements Runnable {
                         byteBuffer.flip();
                         channel.write(byteBuffer).get();
                         byteBuffer.clear();
-
+                        Thread.sleep(100);
 //
 //
 //                        if (channel.read(byteBuffer).get() != -1) {
@@ -50,8 +49,9 @@ public class AIOFutureClient implements Runnable {
 //                            logger.info("{}-client-received:{}", id, charBuffer.toString());
 //                        }
                     }
-                    channel.close();
 
+
+                    channel.close();
                 }
 
             } else {
