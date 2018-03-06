@@ -21,7 +21,6 @@ public class ReadWorker implements Runnable {
         logger.info("循环读取线程启动.");
         while(true) {
             for(AIOWrapper wrapper: wrappers) {
-                logger.info("读取中...");
                 wrapper.readCall();
             }
         }

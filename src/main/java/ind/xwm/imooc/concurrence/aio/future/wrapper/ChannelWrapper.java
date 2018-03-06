@@ -45,13 +45,17 @@ public class ChannelWrapper implements AIOWrapper {
         synchronized (lockRead) {
             try {
                 if (channel.isOpen() && futureRead != null && futureRead.isDone()) {
-                    if (futureRead.get() != -1) {
+                    logger.info("收到数据");
+                    if (futureRead.get() > 0) {
                         bufferRead.flip();
                         while (bufferRead.hasRemaining()) {
+                            logger.info("读取一个byte");
                             bytesRead.add(bufferRead.get());
                         }
                         bufferRead.compact();
+                        futureRead = channel.read(bufferRead);  // 主要问题在这里。
                     } else {
+                        logger.info("读取结束");
                         futureRead = null;
                     }
                 }
@@ -74,6 +78,8 @@ public class ChannelWrapper implements AIOWrapper {
                     bytesMsg[i] = bytesRead.get(i);
                 }
                 String msg = new String(bytesMsg, "UTF-8");
+                logger.info("接受数据-{}", msg);
+                bytesRead = new ArrayList<>();
                 lockRead.notify();
                 return msg;
             } catch (Exception e) {
