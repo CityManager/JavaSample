@@ -5,42 +5,74 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.Set;
 import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.Executor;
+import java.util.concurrent.Executors;
 
 public class AIOWrapperContainer {
     private static Logger logger = LogManager.getLogger(AIOWrapperContainer.class);
     private ConcurrentLinkedQueue<AIOWrapper> aioWrappers = new ConcurrentLinkedQueue<>();
+    private Executor executor = Executors.newFixedThreadPool(1);
 
     private Set<AIOWrapper> aioWrapperSet = new HashSet<>();
     private final Object lock = new Object();
 
+    public AIOWrapperContainer() {
+        super();
+        executor.execute(() -> {
+            logger.info("AIOWrapperContainer:容器清理线程启动");
+            while(true) {
+                try {
+                    this.iteratorRemove();
+                    Thread.sleep(1000);
+                } catch (InterruptedException e) {
+                    logger.info("ChannelHandler:异常{}-", e.getMessage(), e);
+                }
+            }
+        });
+    }
+
     public void push(AIOWrapper aioWrapper) {
-        if(aioWrapper == null) {
+        if(aioWrapper != null && !aioWrapper.isClosed()) {
+            aioWrappers.add(aioWrapper);
+        }
+
+        /*  // 避免限制到 ReadWorker 和 WriteWorker 对异步的操作
+        if (aioWrapper == null) {
             return;
         }
         synchronized (lock) {
-            if(aioWrapper.isClosed()) {
+            if (aioWrapper.isClosed()) {
                 logger.info("channel已经断开，不放回队列");
-                if(aioWrapperSet.contains(aioWrapper)) {
+                if (aioWrapperSet.contains(aioWrapper)) {
                     aioWrapperSet.remove(aioWrapper);
                 }
             } else {
                 aioWrappers.add(aioWrapper);
-                if(!aioWrapperSet.contains(aioWrapper)) {
+                if (!aioWrapperSet.contains(aioWrapper)) {
                     aioWrapperSet.add(aioWrapper);
                 }
             }
         }
+        */
 
     }
 
     public AIOWrapper pull() {
-       return aioWrappers.poll();
+        return aioWrappers.poll();
     }
 
 
+    /**
+     * 这里使用同步，会限制到 ReadWorker 和 WriteWorker 对异步的操作
+     * 比较好的做法是 push 方法的去除对容器的删除操作代码。
+     * 另起线程 对 容器 进行清理，让该线程与 本方法进行竞争
+     *
+     * 见 本类的构造方法和 iteratorRemove 方法
+     *
+     * @param caller 业务执行器
+     */
     public void iteratorCall(BaseContainerCaller caller) {
         synchronized (lock) {
             logger.info("===========");
@@ -51,6 +83,15 @@ public class AIOWrapperContainer {
             logger.info("===========");
         }
 
+    }
+
+    /**
+     * 清理容器中 不可用的 AIOWrapper
+     */
+    private void iteratorRemove() {
+        synchronized (lock) {
+            aioWrappers.removeIf(AIOWrapper::isClosed);
+        }
     }
 
 }

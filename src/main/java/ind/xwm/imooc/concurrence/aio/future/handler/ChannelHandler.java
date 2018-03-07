@@ -25,11 +25,9 @@ public class ChannelHandler implements Runnable {
         while (true) {
             try {
                 AIOWrapper wrapper = container.pull();
-                if (wrapper !=null && !wrapper.isClosed() && wrapper.isReadDone()) {
-                    String msg = wrapper.get();
-                    wrapper.read(); // 读
-                    logger.info("get-" + msg);
-                    if(StringUtils.isNotBlank(msg)) {
+                if (wrapper != null) {
+                    String msg = wrapper.readAsync(); // 异步读取没有结束时，获取到的数据就是null
+                    if (StringUtils.isNotBlank(msg)) {
                         container.iteratorCall(new BaseContainerCaller() {
                             @Override
                             public Object call() {

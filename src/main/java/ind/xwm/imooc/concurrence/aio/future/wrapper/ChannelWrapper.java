@@ -78,9 +78,7 @@ public class ChannelWrapper implements AIOWrapper {
         synchronized (lockRead) {
             try {
                 if (!this.isClosed() && futureRead != null && futureRead.isDone()) {
-                    int readLen = futureRead.get();
-                    logger.info("readLen-{}", readLen);
-                    if (readLen != -1) {
+                    if (futureRead.get() != -1) {
                         bufferRead.flip();
 
                         decoder.decode(bufferRead, charBufferRead, false);
@@ -102,6 +100,7 @@ public class ChannelWrapper implements AIOWrapper {
         }
     }
 
+
     @Override
     public String get() {
         synchronized (lockRead) {
@@ -120,6 +119,24 @@ public class ChannelWrapper implements AIOWrapper {
             }
         }
         return null;
+    }
+
+
+    /**
+     * 整合上面的 isReadDone -- get -- read 方法
+     * handler线程调用
+     * @return 返回上次readAsync 调用的结果
+     */
+    @Override
+    public String readAsync() {
+        String result = null;
+        synchronized (lockRead) {
+            if (channel.isOpen() && futureRead == null) {
+                result = msgRead;
+                futureRead = channel.read(bufferRead);
+            }
+        }
+        return result;
     }
 
     @Override
