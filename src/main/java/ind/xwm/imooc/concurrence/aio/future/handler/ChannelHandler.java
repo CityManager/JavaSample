@@ -32,7 +32,9 @@ public class ChannelHandler implements Runnable {
                             @Override
                             public Object call() {
                                 AIOWrapper writeAioWrapper = getWrapper();
-                                writeAioWrapper.write(msg);
+                                if(writeAioWrapper != null && writeAioWrapper != wrapper) {
+                                    writeAioWrapper.write(msg);
+                                }
                                 return null;
                             }
                         });

@@ -13,13 +13,13 @@ import java.util.concurrent.Executors;
 public class AIOWrapperContainer {
     private static Logger logger = LogManager.getLogger(AIOWrapperContainer.class);
     private ConcurrentLinkedQueue<AIOWrapper> aioWrappers = new ConcurrentLinkedQueue<>();
-    private Executor executor = Executors.newFixedThreadPool(1);
 
     private Set<AIOWrapper> aioWrapperSet = new HashSet<>();
     private final Object lock = new Object();
 
     public AIOWrapperContainer() {
         super();
+        Executor executor = Executors.newFixedThreadPool(1);
         executor.execute(() -> {
             logger.info("AIOWrapperContainer:容器清理线程启动");
             while(true) {
@@ -77,6 +77,7 @@ public class AIOWrapperContainer {
         synchronized (lock) {
             logger.info("===========");
             for (AIOWrapper aioWrapper : aioWrapperSet) {
+                logger.info("aioWrapper");
                 caller.setAIOWrapper(aioWrapper);
                 caller.call();
             }
@@ -90,7 +91,16 @@ public class AIOWrapperContainer {
      */
     private void iteratorRemove() {
         synchronized (lock) {
-            aioWrappers.removeIf(AIOWrapper::isClosed);
+            aioWrapperSet.removeIf(AIOWrapper::isClosed);
+        }
+    }
+
+    public void add(AIOWrapper aioWrapper) {
+        if(aioWrapper != null && !aioWrapper.isClosed()) {
+            synchronized (lock) {
+                aioWrapperSet.add(aioWrapper);
+                aioWrappers.add(aioWrapper);
+            }
         }
     }
 
