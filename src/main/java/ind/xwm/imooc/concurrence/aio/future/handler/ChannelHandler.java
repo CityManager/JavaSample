@@ -19,12 +19,6 @@ public class ChannelHandler implements Runnable {
         this.container = container;
     }
 
-    private List<AIOWrapper> wrappers = new ArrayList<>();
-
-    public void setWrappers(List<AIOWrapper> wrappers) {
-        this.wrappers = wrappers;
-    }
-
     @Override
     public void run() {
         logger.info("handler 线程");

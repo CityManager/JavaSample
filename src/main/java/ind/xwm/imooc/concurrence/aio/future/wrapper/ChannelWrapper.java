@@ -21,6 +21,7 @@ public class ChannelWrapper implements AIOWrapper {
     private AsynchronousSocketChannel channel;
 
     private ByteBuffer bufferRead = ByteBuffer.allocateDirect(128 * 1024);
+    private CharBuffer charBufferRead = CharBuffer.allocate(32*1024);
     private Future<Integer> futureRead = null;
     private String msgRead = null;
     private final Object lockRead = new Object();
@@ -29,9 +30,28 @@ public class ChannelWrapper implements AIOWrapper {
         this.channel = channel;
     }
 
+    /**
+     * 这里使用 synchronized 存在弊端：
+     * 1. 主要的读流程 isReadDone --> get --> read
+     * 2. 假设有两个线程A、B，
+     *  A执行 isReadDone 加锁，返回后，释放锁，
+     *  然后get 数据，在要 read 前被系统线程调度挂起，转去执行B
+     *
+     *  B线程 isReadDone --> get --> read 调完后被挂起，回到A线程
+     *
+     *  A线程 read
+     *  （如果B线程的异步read操作还没有完成，则没事， 因为这里还会判断是否可执行read）
+     *  （但是，若B线程异步read已经完成，数据读取了， A再 read ，则B线程 read的数据有可能被吞掉）
+     *
+     *  优化：
+     *      1. 使用 Lock 对象 进行 isReadDone --> get --> read 三个方法串联加锁
+     *      2. 将 isReadDone --> get --> read 统一成一个方法
+     *         -- 这个可能不行， get是阻塞方法(可以非阻塞化，没数据就返回null嘛)
+     * @return 是否读完成
+     */
     @Override
     public boolean isReadDone() {
-        synchronized (lockRead) {
+        synchronized (lockRead) {  // 这里是不是可以去掉这个加锁？
             return futureRead == null;
         }
     }
@@ -62,10 +82,11 @@ public class ChannelWrapper implements AIOWrapper {
                     logger.info("readLen-{}", readLen);
                     if (readLen != -1) {
                         bufferRead.flip();
-                        CharBuffer charBuffer = CharBuffer.allocate(128*1024);
-                        decoder.decode(bufferRead, charBuffer, false);
-                        charBuffer.flip();
-                        msgRead = charBuffer.toString();
+
+                        decoder.decode(bufferRead, charBufferRead, false);
+                        charBufferRead.flip();
+                        msgRead = charBufferRead.toString();
+                        charBufferRead.compact();
                         logger.info("readCall-" + msgRead);
                         bufferRead.compact();
                     } else { // 链接已经断开
