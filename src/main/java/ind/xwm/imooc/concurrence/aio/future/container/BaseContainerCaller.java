@@ -4,6 +4,9 @@ import ind.xwm.imooc.concurrence.aio.future.wrapper.AIOWrapper;
 
 import java.util.concurrent.Callable;
 
+/**
+ * wrapper容器遍历 wrapper处理业务的接口，便于handler等业务模块需要便利wrapper进行业务操作
+ */
 public abstract class BaseContainerCaller implements Callable {
 
 

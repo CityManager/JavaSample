@@ -10,6 +10,9 @@ import org.apache.logging.log4j.Logger;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * 业务处理器
+ */
 public class ChannelHandler implements Runnable {
     private static Logger logger = LogManager.getLogger(ChannelHandler.class);
 

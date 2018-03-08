@@ -10,6 +10,9 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 
+/**
+ * wrapper容器，提供线程安全的存放与移除方法
+ */
 public class AIOWrapperContainer {
     private static Logger logger = LogManager.getLogger(AIOWrapperContainer.class);
     private ConcurrentLinkedQueue<AIOWrapper> aioWrappers = new ConcurrentLinkedQueue<>();

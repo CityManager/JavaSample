@@ -16,7 +16,9 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 
 /**
- * AsynchronousSocketChannel
+ * AsynchronousSocketChannel的包装类，
+ * 提供异步方法readAsync给到 handler调用
+ * 提供readCall 和 writeCall 给到 ReadWorker 和 WriteWorker 调用
  */
 public class ChannelWrapper implements AIOWrapper {
     private static Logger logger = LogManager.getLogger(ChannelWrapper.class);

@@ -17,6 +17,12 @@ import java.util.concurrent.Executors;
 
 /**
  * 广播传播器服务端
+ * 设计了几个角色：
+ * 1. AIOFutureServer ： 服务端启动器，同时也是 accept loop，用于接受channel并包装为wrapper
+ * 2. ChannelWrapper ： channel包装器，对外开发读取接口
+ * 3. AIOWrapperContainer： wrapper 的存放容器，接受accept后包装的wrapper，并在内部持有一个清理容器元素线程
+ * 4. ReadWorker 和 WriteWorker ： 异步读/写循环器，通过容器获取wrapper，并调用wrapper提供的读写接口
+ * 5. ChannelHandler ： 业务逻辑处理器（其实可以用于具体的业务分发），获取channel数据，并进行业务处理
  */
 public class AIOFutureServer {
     private static Logger logger = LogManager.getLogger(AIOFutureServer.class);
